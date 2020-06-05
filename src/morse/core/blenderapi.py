@@ -327,3 +327,54 @@ def get_screensize():
     height = bge.render.getWindowHeight()
     return [width, height]
 
+def get_bounding_box(object_name):
+    scene = bge.logic.getCurrentScene()
+    if object_name not in scene.objects:
+        print('object {} not in scene!'.format(object_name))
+        return [-1, width+1, -1, height+1, 3]
+    object = scene.objects[object_name]
+    camera = scene.active_camera
+    width = bge.render.getWindowWidth()
+    height = bge.render.getWindowHeight()
+    x_min = 10000
+    y_min = 10000
+    x_max = -10000
+    y_max = -10000
+    z_val = 0
+    x_coord, y_coord = camera.getScreenPosition(object)
+    if 0 < x_coord < 1 and 0 < y_coord < 1:
+        model_matrix = object.worldTransform
+        view_matrix = camera.getWorldToCamera()
+        model_view_matrix = view_matrix * model_matrix
+        projection_matrix = camera.projection_matrix
+        model_view_projection_matrix = projection_matrix * model_view_matrix
+        for mesh in object.meshes:
+            for m_index in range(len(mesh.materials)):
+                for v_index in range(mesh.getVertexArrayLength(m_index)):
+                    vertex = mesh.getVertex(m_index, v_index)
+                    vertex_pos = vertex.getXYZ()
+                    vertex_pos_4d = vertex_pos.copy()
+                    vertex_pos_4d.resize_4d()
+                    vertex_pos_4d = model_view_projection_matrix * vertex_pos_4d
+                    vertex_pos_4d /= vertex_pos_4d[3]
+                    vertex_pos = vertex_pos_4d.resized(3)
+                    screen_x = (vertex_pos.x + 1) / 2 * width
+                    screen_y = (vertex_pos.y + 1) / 2 * height
+                    z_val = math.ceil(vertex_pos.z)
+                    if screen_x < x_min:
+                        x_min = screen_x
+                    if screen_x > x_max:
+                        x_max = screen_x
+                    if screen_y < y_min:
+                        y_min = screen_y
+                    if screen_y > y_max:
+                        y_max = screen_y
+        x_min = math.floor(x_min)
+        x_max = math.ceil(x_max)
+        y_min = height - math.floor(y_min)
+        y_max = height - math.ceil(y_max)
+        return [x_min, x_max, y_min, y_max, z_val,
+                camera.worldPosition.x, camera.worldPosition.y, camera.worldPosition.z,
+                object.worldPosition.x, object.worldPosition.y, object.worldPosition.z]
+    else:
+        return [-1, width+1, -1, height+1, 2]
