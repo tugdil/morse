@@ -11,7 +11,8 @@ trajectory_file = 'trajectory.csv'
 base_path = os.path.join(os.getcwd(), 'simulationData')
 print(base_path)
 this_time = time.asctime()
-out_path = os.path.join(base_path, 'images', this_time)
+images_path = os.path.join(base_path, 'images')
+out_path = os.path.join(images_path, this_time)
 os.mkdir(out_path)
 out_dict = {}
 img_dict = {}
