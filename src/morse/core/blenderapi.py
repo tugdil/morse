@@ -322,3 +322,8 @@ def make_screenshot(filename):
     else:
         return -1
 
+def get_screensize():
+    width = bge.render.getWindowWidth()
+    height = bge.render.getWindowHeight()
+    return [width, height]
+
