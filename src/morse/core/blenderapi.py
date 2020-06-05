@@ -5,6 +5,7 @@ documentation generation purposes).
 
 import sys
 import os
+import math
 
 fake = False
 
@@ -314,3 +315,10 @@ def set_time_scale(time_scale):
         else:
             logger.warning("setTimeScale requires at least Blender 2.77")
     return False
+
+def make_screenshot(filename):
+    if not fake:
+        bge.render.makeScreenshot(filename)
+    else:
+        return -1
+
