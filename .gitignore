@@ -26,3 +26,9 @@ scene.*.blend
 .pydevproject
 .settings
 .metadata
+
+# Pycharm project files
+.idea
+
+# bbox speific files
+*/simulationData/images/

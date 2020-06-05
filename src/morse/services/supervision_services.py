@@ -349,9 +349,9 @@ class Supervision(AbstractObject):
 
     @service
     def get_b_boxes(self, path, filename):
-        # path = '/home/matthias/simulationData'
         blenderapi.make_screenshot(os.path.join(path, filename))
-        object_list = ['RedBull.001', 'RedBullZero']
+        object_list = ['Ball1','Ball2','Ball3','Ball4','Ball5','Ball6','Ball7','Ball8','Screen1','Screen2','Screen3','Screen4']
+        # object_list = ['RedBull.001', 'RedBullZero']
         # object_list = ['Bottle_Circle.000', 'Bottle_Circle.001', 'Can01', 'Can01.001', 'Can02', 'Can02.001', 'Can03', 'Can03.001']
         # object_list = ['WaterBottle001', 'WaterBottle001.001', 'Can01', 'Can01.001', 'Can02', 'Can02.001', 'Can03', 'Can03.001', 'Coke001', 'Coke001.001', 'Coke002Cup']
         while not os.path.exists(path):
