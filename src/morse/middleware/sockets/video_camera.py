@@ -3,6 +3,7 @@ import json
 import base64
 import logging; logger = logging.getLogger("morse." + __name__)
 from morse.middleware.socket_datastream import SocketPublisher
+from morse.core import blenderapi
 
 class VideoCameraPublisher(SocketPublisher):
     """ Publish a base64 encoded RGBA image """
@@ -26,12 +27,20 @@ class VideoCameraPublisher(SocketPublisher):
         data = base64.b64encode( image ).decode() # get string
         intrinsic = [ list(vec) for vec in self.data['intrinsic_matrix'] ]
 
+        scene = blenderapi.scene()
+        cam = scene.active_camera
+        view_matrix = cam.getWorldToCamera()
+        projection_matrix = cam.projection_matrix
+        view_projection_matrix = projection_matrix * view_matrix
+        view_projection = [ list(vec) for vec in view_projection_matrix ]
+
         res = {
             'timestamp': self.data['timestamp'],
             'height':    self.component_instance.image_height,
             'width':     self.component_instance.image_width,
             'image':     data,
             'intrinsic_matrix': intrinsic,
+            'view_projection_matrix': view_projection
         }
 
         return (json.dumps(res) + '\n').encode()

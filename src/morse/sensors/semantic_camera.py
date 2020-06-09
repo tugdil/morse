@@ -180,7 +180,9 @@ class SemanticCamera(morse.sensors.camera.Camera):
         for obj, bb in self.trackedObjects.items():
             if self._check_visible(obj, bb):
                 # Create dictionary to contain object name, type,
-                # description, position and orientation
+                # description, position, orientation and bounding box
+                pos = obj.position
+                bbox = [[bb_corner[i] + pos[i] for i in range(3)] for bb_corner in bb]
                 if self.relative:
                     t3d = Transformation3d(obj)
                     logger.debug("t3d(obj) = {t}".format(t=t3d))
@@ -193,7 +195,8 @@ class SemanticCamera(morse.sensors.camera.Camera):
                             'description': obj.get('Description', ''),
                             'type': obj.get('Type', ''),
                             'position': transformation.translation,
-                            'orientation': transformation.rotation}
+                            'orientation': transformation.rotation,
+                            'bbox': bbox}
                 self.local_data['visible_objects'].append(obj_dict)
                 
         logger.debug("Visible objects: %s" % self.local_data['visible_objects'])
