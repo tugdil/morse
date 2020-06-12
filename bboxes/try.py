@@ -7,18 +7,17 @@ from PIL import Image
 import time
 import csv
 
+def send_destination(s, morse, x, y, yaw):
+    s.publish({'x': x, 'y': y, 'z': 0, 'yaw': yaw, 'pitch': 0.0, 'roll': 0.0})
+    morse.sleep(0.5)
+
+
 base_path = os.path.join(os.getcwd(), 'simulationData')
 this_time = time.asctime()
 images_path = os.path.join(base_path, 'images')
 out_path = os.path.join(images_path, this_time)
 os.mkdir(out_path)
 idx = 0
-
-
-def send_destination(s, morse, x, y, yaw):
-    s.publish({'x': x, 'y': y, 'z': 0, 'yaw': yaw, 'pitch': 0.0, 'roll': 0.0})
-    morse.sleep(0.5)
-
 
 with Morse() as morse:
     semantic_camera = morse.robot.semantic_camera
@@ -70,9 +69,10 @@ with Morse() as morse:
                     y_min = height - math.floor(y_min)
                     y_max = height - math.ceil(y_max)
                     img = image.crop((x_min, y_max, x_max, y_min))
-                    img_name = str(idx) + '_' + visible_object['type'] + '.png'
+                    img_name = str(idx) + '_' + visible_object['name'] + '.png'
                     image_path = os.path.join(out_path, img_name)
                     img.save(image_path)
-                    meta_writer.writerow([idx, image_path, visible_object['type'], visible_object['name']])
+                    object_category = visible_object['name'].split('.')[0]
+                    meta_writer.writerow([idx, image_path, object_category, visible_object['name']])
                     idx += 1
                 counter += 1
