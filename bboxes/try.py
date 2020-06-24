@@ -7,17 +7,18 @@ from PIL import Image
 import time
 import csv
 
-def send_destination(s, morse, x, y, yaw):
-    s.publish({'x': x, 'y': y, 'z': 0, 'yaw': yaw, 'pitch': 0.0, 'roll': 0.0})
-    morse.sleep(0.5)
-
-
 base_path = os.path.join(os.getcwd(), 'simulationData')
 this_time = time.asctime()
 images_path = os.path.join(base_path, 'images')
 out_path = os.path.join(images_path, this_time)
 os.mkdir(out_path)
 idx = 0
+
+
+def send_destination(s, simu, x, y, yaw):
+    s.publish({'x': x, 'y': y, 'z': 0, 'yaw': yaw, 'pitch': 0.0, 'roll': 0.0})
+    simu.sleep(0.5)
+
 
 with Morse() as morse:
     semantic_camera = morse.robot.semantic_camera
@@ -31,6 +32,7 @@ with Morse() as morse:
             for position in positions_reader:
                 send_destination(teleport_client, morse, float(position[0]), float(position[1]), float(position[2]))
                 semantic_camera_data = semantic_camera.get()
+                print(semantic_camera_data)
                 video_camera_data = video_camera.get()
                 view_projection = video_camera_data['view_projection_matrix']
                 view_projection_matrix = np.array([np.array(x) for x in view_projection])
@@ -44,10 +46,10 @@ with Morse() as morse:
 
                 for visible_object in semantic_camera_data['visible_objects']:
                     bbox = visible_object['bbox']
-                    x_min = width + 1
-                    x_max = -1
-                    y_min = height + 1
-                    y_max = -1
+                    x_min = width
+                    x_max = 0
+                    y_min = height
+                    y_max = 0
                     for corner in bbox:
                         corner.append(1)
                         corner = np.array(corner)
@@ -68,6 +70,7 @@ with Morse() as morse:
                     x_max = math.ceil(x_max)
                     y_min = height - math.floor(y_min)
                     y_max = height - math.ceil(y_max)
+                    print(''+str(x_min)+', '+str(x_max))
                     img = image.crop((x_min, y_max, x_max, y_min))
                     img_name = str(idx) + '_' + visible_object['name'] + '.png'
                     image_path = os.path.join(out_path, img_name)
