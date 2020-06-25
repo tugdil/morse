@@ -196,6 +196,7 @@ class SemanticCamera(morse.sensors.camera.Camera):
                             'type': obj.get('Type', ''),
                             'position': transformation.translation,
                             'orientation': transformation.rotation,
+                            'yaw': transformation.yaw,
                             'bbox': bbox}
                 self.local_data['visible_objects'].append(obj_dict)
                 

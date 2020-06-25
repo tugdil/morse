@@ -6,7 +6,7 @@ from PIL import Image
 import shutil
 
 positions_mode = True
-positions_file = 'positions.csv'
+positions_file = 'positions_1.csv'
 trajectory_file = 'trajectory.csv'
 base_path = os.path.join(os.getcwd(), 'simulationData')
 print(base_path)

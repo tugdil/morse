@@ -14,7 +14,7 @@ out_path = os.path.join(images_path, this_time)
 os.mkdir(out_path)
 idx = 0
 meta_data = {}
-labels = ['index', 'image_path', 'object_class', 'object_name', 'overlaps']
+labels = ['index', 'image_path', 'object_class', 'object_name', 'ambiguous', 'overlaps']
 
 
 def send_destination(s, simu, x, y, yaw):
@@ -70,8 +70,6 @@ with Morse() as morse:
             bbox_coordinates = {}
 
             for visible_object in semantic_camera_data['visible_objects']:
-                # get ambiguous view
-                # get bounding box image
                 bbox = visible_object['bbox']
                 x_min = width
                 x_max = 0
@@ -103,13 +101,16 @@ with Morse() as morse:
                 image_path = os.path.join(out_path, img_name)
                 img.save(image_path)
                 object_category = visible_object['name'].split('.')[0]
-                meta_data[idx] = [idx, image_path, object_category, visible_object['name']]
+                ambiguous = 0
+                if 'RedBull' in object_category and (round(float(position[2]), 1) + round(visible_object['yaw'], 1)) % round((2 * math.pi), 1) < 0.00001:
+                    ambiguous = 1
+                meta_data[idx] = [idx, image_path, object_category, visible_object['name'], ambiguous]
                 idx += 1
             counter += 1
 
-            overlaps = overlaps(bbox_coordinates)
-            for row in list(meta_data):
-                meta_data[row].append(len(overlaps[row]))
+            overlap_dict = overlaps(bbox_coordinates)
+            for row in list(overlap_dict):
+                meta_data[row].append(len(overlap_dict[row]))
 
     with open(os.path.join(out_path, 'meta_data.csv'), mode='w') as meta_file:
         meta_writer = csv.writer(meta_file)
