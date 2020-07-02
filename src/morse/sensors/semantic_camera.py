@@ -226,7 +226,7 @@ class SemanticCamera(morse.sensors.camera.Camera):
 
         # Translate the bounding box to the current object position
         #  and check if it is in the frustum
-        if self.blender_cam.boxInsideFrustum(bbox) != self.blender_cam.OUTSIDE:
+        if self.blender_cam.boxInsideFrustum(bbox) == self.blender_cam.INSIDE:
 
             if not self.noocclusion:
                 # Check that there are no other objects between the camera
