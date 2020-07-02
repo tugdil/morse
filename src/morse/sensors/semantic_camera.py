@@ -6,6 +6,7 @@ import morse.sensors.camera
 from morse.helpers import passive_objects
 from morse.helpers.components import add_data, add_property
 from morse.helpers.transformation import Transformation3d
+from morse.core.mathutils import Vector
 
 class SemanticCamera(morse.sensors.camera.Camera):
     """
@@ -179,6 +180,7 @@ class SemanticCamera(morse.sensors.camera.Camera):
         self.local_data['visible_objects'] = []
         for obj, bb in self.trackedObjects.items():
             if self._check_visible(obj, bb):
+                occlusion = 'not given'#self._check_occlusion(obj)
                 # Create dictionary to contain object name, type,
                 # description, position, orientation and bounding box
                 pos = obj.position
@@ -197,11 +199,79 @@ class SemanticCamera(morse.sensors.camera.Camera):
                             'position': transformation.translation,
                             'orientation': transformation.rotation,
                             'yaw': transformation.yaw,
-                            'bbox': bbox}
+                            'bbox': bbox,
+                            'occlusion': occlusion}
                 self.local_data['visible_objects'].append(obj_dict)
                 
         logger.debug("Visible objects: %s" % self.local_data['visible_objects'])
 
+    def _get_edge(self, obj):
+        pos = obj.position
+        print('object: {}, position: {}'.format(obj, pos))
+        pos = self.blender_cam.world_to_camera * pos
+        x_values = []
+        y_values = []
+        positions = []
+        for mesh in obj.meshes:
+            for material in mesh.materials:
+                for i in range(mesh.getVertexArrayLength(material.material_index)):
+                    proxy = mesh.getVertex(material.material_index, i)
+                    vertex = self.blender_cam.world_to_camera * proxy.XYZ
+                    x_values.append(int(vertex.x * 1000))
+                    y_values.append(int(vertex.y * 1000))
+                    positions.append(vertex)
+        x_min = min(x_values)
+        x_max = max(x_values)
+        y_min = min(y_values)
+        y_max = max(y_values)
+
+        x_max_list = []
+        x_min_list = []
+        y_min_list = []
+        y_max_list = []
+        results = []
+        for position in positions:
+            position.x = int(position.x * 1000)
+            position.y = int(position.y * 1000)
+            if position.x == x_min:
+                x_min_list.append(position.y)
+            if position.x == x_max:
+                x_max_list.append(position.y)
+            if position.y == y_min:
+                y_min_list.append(position.x)
+            if position.y == y_max:
+                y_max_list.append(position.x)
+        results.append(Vector([float(x_min/1000), float(min(x_min_list)/1000), pos.z]))
+        results.append(Vector([float(x_min/1000), float(max(x_min_list)/1000), pos.z]))
+        results.append(Vector([float(x_max/1000), float(min(x_max_list)/1000), pos.z]))
+        results.append(Vector([float(x_max/1000), float(max(x_max_list)/1000), pos.z]))
+        results.append(Vector([float(y_min/1000), float(min(y_min_list)/1000), pos.z]))
+        results.append(Vector([float(y_min/1000), float(max(y_min_list)/1000), pos.z]))
+        results.append(Vector([float(y_max/1000), float(min(y_max_list)/1000), pos.z]))
+        results.append(Vector([float(y_max/1000), float(max(y_max_list)/1000), pos.z]))
+        results.append(pos)
+        final_results = []
+        print('results in cmera coord: {}'.format(results))
+        for position in results:
+            new_position = self.blender_cam.camera_to_world * position
+            final_results.append(new_position)
+        print('final_results in world coord: {}'.format(final_results))
+        return final_results
+
+    def _check_occlusion(self, obj):
+        """Check how much occluded an object is"""
+        points = self._get_edge(obj)
+        print(points)
+        pos = obj.position
+        points.append(pos)
+        noocclusion_count = 0
+        point_count = 0
+        for point in points:
+            closest_obj = self.bge_object.rayCastTo(point)
+            point_count += 1
+            if closest_obj is None or closest_obj in [obj] + list(obj.children):
+                noocclusion_count += 1
+        return 1-(noocclusion_count / point_count)
 
     def _check_visible(self, obj, bb):
         """ Check if an object lies inside of the camera frustum. 
@@ -239,5 +309,7 @@ class SemanticCamera(morse.sensors.camera.Camera):
                     return True
             else:
                 return True
+
+            #return True
 
         return False

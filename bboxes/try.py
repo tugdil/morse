@@ -14,7 +14,7 @@ out_path = os.path.join(images_path, this_time)
 os.mkdir(out_path)
 idx = 0
 meta_data = {}
-labels = ['index', 'image_path', 'object_class', 'object_name', 'ambiguous', 'overlaps']
+labels = ['index', 'image_path', 'object_class', 'object_name', 'occlusion', 'ambiguous', 'overlaps',]
 
 
 def send_destination(s, simu, x, y, yaw):
@@ -104,7 +104,7 @@ with Morse() as morse:
                 ambiguous = 0
                 if 'RedBull' in object_category and (round(float(position[2]), 1) + round(visible_object['yaw'], 1)) % round((2 * math.pi), 1) < 0.00001:
                     ambiguous = 1
-                meta_data[idx] = [idx, image_path, object_category, visible_object['name'], ambiguous]
+                meta_data[idx] = [idx, image_path, object_category, visible_object['name'], visible_object['occlusion'], ambiguous]
                 idx += 1
             counter += 1
 
