@@ -179,8 +179,8 @@ class SemanticCamera(morse.sensors.camera.Camera):
         # Create dictionaries
         self.local_data['visible_objects'] = []
         for obj, bb in self.trackedObjects.items():
-            if self._check_visible(obj, bb):
-                occlusion = 'not given'#self._check_occlusion(obj)
+            if self._check_distance(obj) and self._check_visible(obj, bb):
+                occlusion = self._check_occlusion(obj)
                 # Create dictionary to contain object name, type,
                 # description, position, orientation and bounding box
                 pos = obj.position
@@ -251,17 +251,17 @@ class SemanticCamera(morse.sensors.camera.Camera):
         results.append(Vector([float(y_max/1000), float(max(y_max_list)/1000), pos.z]))
         results.append(pos)
         final_results = []
-        print('results in cmera coord: {}'.format(results))
+        #print('results in cmera coord: {}'.format(results))
         for position in results:
             new_position = self.blender_cam.camera_to_world * position
             final_results.append(new_position)
-        print('final_results in world coord: {}'.format(final_results))
+        #print('final_results in world coord: {}'.format(final_results))
         return final_results
 
     def _check_occlusion(self, obj):
         """Check how much occluded an object is"""
         points = self._get_edge(obj)
-        print(points)
+        #print(points)
         pos = obj.position
         points.append(pos)
         noocclusion_count = 0
@@ -272,6 +272,11 @@ class SemanticCamera(morse.sensors.camera.Camera):
             if closest_obj is None or closest_obj in [obj] + list(obj.children):
                 noocclusion_count += 1
         return 1-(noocclusion_count / point_count)
+
+    def _check_distance(self, obj):
+        """ Check if an object is to far away from camera"""
+        dist = self.bge_object.getDistanceTo(obj)
+        return dist < 4
 
     def _check_visible(self, obj, bb):
         """ Check if an object lies inside of the camera frustum. 
