@@ -178,9 +178,10 @@ class SemanticCamera(morse.sensors.camera.Camera):
 
         # Create dictionaries
         self.local_data['visible_objects'] = []
+        self.local_data['disturbing_bboxes'] = []
         for obj, bb in self.trackedObjects.items():
             if self._check_distance(obj) and self._check_visible(obj, bb):
-                occlusion = self._check_occlusion(obj)
+                occlusion = 'not given'#self._check_occlusion(obj)
                 # Create dictionary to contain object name, type,
                 # description, position, orientation and bounding box
                 pos = obj.position
@@ -202,6 +203,11 @@ class SemanticCamera(morse.sensors.camera.Camera):
                             'bbox': bbox,
                             'occlusion': occlusion}
                 self.local_data['visible_objects'].append(obj_dict)
+            if self._check_visible(obj, bb, False):
+                pos = obj.position
+                bbox = [[bb_corner[i] + pos[i] for i in range(3)] for bb_corner in bb]
+                disturbing_bbox = {'bbox': bbox}
+                self.local_data['disturbing_bboxes'].append(disturbing_bbox)
                 
         logger.debug("Visible objects: %s" % self.local_data['visible_objects'])
 
@@ -278,7 +284,7 @@ class SemanticCamera(morse.sensors.camera.Camera):
         dist = self.bge_object.getDistanceTo(obj)
         return dist < 4
 
-    def _check_visible(self, obj, bb):
+    def _check_visible(self, obj, bb, inside_frustum=True):
         """ Check if an object lies inside of the camera frustum. 
         
         The behaviour of this method is impacted by the sensor's 
@@ -301,7 +307,10 @@ class SemanticCamera(morse.sensors.camera.Camera):
 
         # Translate the bounding box to the current object position
         #  and check if it is in the frustum
-        if self.blender_cam.boxInsideFrustum(bbox) == self.blender_cam.INSIDE:
+        box_inside_frustum = self.blender_cam.boxInsideFrustum(bbox)
+        if not inside_frustum:
+            return box_inside_frustum != self.blender_cam.OUTSIDE
+        if box_inside_frustum == self.blender_cam.INSIDE:
 
             if not self.noocclusion:
                 # Check that there are no other objects between the camera

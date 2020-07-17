@@ -21,20 +21,18 @@ def send_destination(s, simu, x, y, yaw):
     s.publish({'x': x, 'y': y, 'z': 0, 'yaw': yaw, 'pitch': 0.0, 'roll': 0.0})
     simu.sleep(0.5)
 
-def overlaps(bbox_coordinates):
+def overlaps(bbox_coordinates, disturbing_bbox_coordinates):
     overlaps = {}
     for index in list(bbox_coordinates):
-        overlaps[index] = []
-    copy = bbox_coordinates.copy()
+        overlaps[index] = -1
     for index in list(bbox_coordinates):
-        copy.pop(index)
-        for bbox in list(copy):
-            if is_overlapping(bbox_coordinates[index], copy[bbox]):
-                overlaps[index].append(bbox)
-                overlaps[bbox].append(index)
+        for bbox in disturbing_bbox_coordinates:
+            if is_overlapping(bbox_coordinates[index], bbox):
+                overlaps[index] += 1
     return overlaps
 
 def is_overlapping(coords_1, coords_2):
+    print('coords_1: {}, coords_2: {}'.format(coords_1, coords_2))
     if coords_1[0] > coords_2[1]:
         return False
     if coords_1[1] < coords_2[0]:
@@ -44,6 +42,34 @@ def is_overlapping(coords_1, coords_2):
     if coords_1[3] < coords_2[2]:
         return False
     return True
+
+
+def get_bbox_pixels(bbox, width, height, view_projection_matrix):
+    x_min = width
+    x_max = 0
+    y_min = height
+    y_max = 0
+    for corner in bbox:
+        corner.append(1)
+        corner = np.array(corner)
+        corner = view_projection_matrix @ corner
+        corner /= corner[3]
+        corner = corner[:3]
+        screen_x = (corner[0] + 1) / 2 * width
+        screen_y = (corner[1] + 1) / 2 * height
+        if screen_x < x_min:
+            x_min = screen_x
+        if screen_x > x_max:
+            x_max = screen_x
+        if screen_y < y_min:
+            y_min = screen_y
+        if screen_y > y_max:
+            y_max = screen_y
+    x_min = math.floor(x_min)
+    x_max = math.ceil(x_max)
+    y_min = math.floor(y_min)
+    y_max = math.ceil(y_max)
+    return (x_min, x_max, y_min, y_max)
 
 with Morse() as morse:
     semantic_camera = morse.robot.semantic_camera
@@ -68,35 +94,18 @@ with Morse() as morse:
             image = Image.frombytes('RGBA', (int(height), int(width)), image_bytes)
 
             bbox_coordinates = {}
+            disturbing_bbox_coordinates = []
+
+            for obj in semantic_camera_data['disturbing_bboxes']:
+                bbox = obj['bbox']
+                x_min, x_max, y_min, y_max = get_bbox_pixels(bbox, width, height, view_projection_matrix)
+                disturbing_bbox_coordinates.append([x_min+1, x_max-1, y_min+1, y_max-1])
 
             for visible_object in semantic_camera_data['visible_objects']:
                 bbox = visible_object['bbox']
-                x_min = width
-                x_max = 0
-                y_min = height
-                y_max = 0
-                for corner in bbox:
-                    corner.append(1)
-                    corner = np.array(corner)
-                    corner = view_projection_matrix @ corner
-                    corner /= corner[3]
-                    corner = corner[:3]
-                    screen_x = (corner[0] + 1) / 2 * width
-                    screen_y = (corner[1] + 1) / 2 * height
-                    if screen_x < x_min:
-                        x_min = screen_x
-                    if screen_x > x_max:
-                        x_max = screen_x
-                    if screen_y < y_min:
-                        y_min = screen_y
-                    if screen_y > y_max:
-                        y_max = screen_y
-                x_min = math.floor(x_min)
-                x_max = math.ceil(x_max)
-                y_min = height - math.floor(y_min)
-                y_max = height - math.ceil(y_max)
-                bbox_coordinates[idx] = [x_min, x_max, y_max, y_min]
-                img = image.crop((x_min, y_max, x_max, y_min))
+                x_min, x_max, y_min, y_max = get_bbox_pixels(bbox, width, height, view_projection_matrix)
+                bbox_coordinates[idx] = [x_min, x_max, y_min, y_max]
+                img = image.crop((x_min, height - y_max, x_max, height - y_min))
                 img_name = str(idx) + '.png'
                 image_path = os.path.join(out_path, img_name)
                 img.save(image_path)
@@ -108,9 +117,9 @@ with Morse() as morse:
                 idx += 1
             counter += 1
 
-            overlap_dict = overlaps(bbox_coordinates)
+            overlap_dict = overlaps(bbox_coordinates, disturbing_bbox_coordinates)
             for row in list(overlap_dict):
-                meta_data[row].append(len(overlap_dict[row]))
+                meta_data[row].append(overlap_dict[row])
 
     with open(os.path.join(out_path, 'meta_data.csv'), mode='w') as meta_file:
         meta_writer = csv.writer(meta_file)
