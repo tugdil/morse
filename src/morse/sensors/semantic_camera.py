@@ -310,6 +310,9 @@ class SemanticCamera(morse.sensors.camera.Camera):
         box_inside_frustum = self.blender_cam.boxInsideFrustum(bbox)
         if not inside_frustum:
             return box_inside_frustum != self.blender_cam.OUTSIDE
+            # closest_obj = self.bge_object.rayCastTo(obj)
+            # if closest_obj in [obj] + list(obj.children):
+            #     return box_inside_frustum != self.blender_cam.OUTSIDE
         if box_inside_frustum == self.blender_cam.INSIDE:
 
             if not self.noocclusion:
