@@ -14,7 +14,7 @@ out_path = os.path.join(images_path, this_time)
 os.mkdir(out_path)
 idx = 0
 meta_data = {}
-labels = ['index', 'image_path', 'object_class', 'object_name', 'x', 'y', 'z', 'ambiguous', 'overlaps',]
+labels = ['index', 'object_class', 'object_name', 'x', 'y', 'z', 'ambiguous', 'overlaps',]
 
 
 def send_destination(s, simu, x, y, yaw):
@@ -112,7 +112,7 @@ with Morse() as morse:
                 object_category = visible_object['name'].split('.')[0]
                 ambiguous = 0
                 (x, y, z) = visible_object['position']
-                meta_data[idx] = [idx, image_path, object_category, visible_object['name'], x, y, z, ambiguous]
+                meta_data[idx] = [idx, object_category, visible_object['name'], x, y, z, ambiguous]
                 idx += 1
             counter += 1
 
