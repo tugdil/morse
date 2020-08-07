@@ -14,7 +14,7 @@ out_path = os.path.join(images_path, this_time)
 os.mkdir(out_path)
 idx = 0
 meta_data = {}
-labels = ['index', 'image_path', 'object_class', 'object_name', 'occlusion', 'ambiguous', 'overlaps',]
+labels = ['index', 'image_path', 'object_class', 'object_name', 'x', 'y', 'z', 'ambiguous', 'overlaps',]
 
 
 def send_destination(s, simu, x, y, yaw):
@@ -32,7 +32,7 @@ def overlaps(bbox_coordinates, disturbing_bbox_coordinates):
     return overlaps
 
 def is_overlapping(coords_1, coords_2):
-    print('coords_1: {}, coords_2: {}'.format(coords_1, coords_2))
+    #print('coords_1: {}, coords_2: {}'.format(coords_1, coords_2))
     if coords_1[0] > coords_2[1]:
         return False
     if coords_1[1] < coords_2[0]:
@@ -111,9 +111,8 @@ with Morse() as morse:
                 img.save(image_path)
                 object_category = visible_object['name'].split('.')[0]
                 ambiguous = 0
-                if 'RedBull' in object_category and (round(float(position[2]), 1) + round(visible_object['yaw'], 1)) % round((2 * math.pi), 1) < 0.00001:
-                    ambiguous = 1
-                meta_data[idx] = [idx, image_path, object_category, visible_object['name'], visible_object['occlusion'], ambiguous]
+                (x, y, z) = visible_object['position']
+                meta_data[idx] = [idx, image_path, object_category, visible_object['name'], x, y, z, ambiguous]
                 idx += 1
             counter += 1
 
