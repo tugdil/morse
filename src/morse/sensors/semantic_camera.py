@@ -282,7 +282,7 @@ class SemanticCamera(morse.sensors.camera.Camera):
     def _check_distance(self, obj):
         """ Check if an object is to far away from camera"""
         dist = self.bge_object.getDistanceTo(obj)
-        return dist < 4
+        return dist < 5
 
     def _check_visible(self, obj, bb, inside_frustum=True):
         """ Check if an object lies inside of the camera frustum. 
