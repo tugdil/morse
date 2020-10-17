@@ -19,7 +19,7 @@ labels = ['index', 'object_class', 'object_name', 'x', 'y', 'z', 'ambiguous', 'o
 
 def send_destination(s, simu, x, y, yaw):
     s.publish({'x': x, 'y': y, 'z': 0, 'yaw': yaw, 'pitch': 0.0, 'roll': 0.0})
-    simu.sleep(0.5)
+    simu.sleep(0.5)  # wait a bit for simulation to apply changes
 
 def overlaps(bbox_coordinates, disturbing_bbox_coordinates):
     overlaps = {}
