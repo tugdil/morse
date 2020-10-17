@@ -5,8 +5,6 @@ from morse.blender.main import reset_objects as main_reset, close_all as main_cl
 from morse.core.abstractobject import AbstractObject
 from morse.core.exceptions import *
 import json
-import os
-import csv
 
 def get_structured_children_of(blender_object):
     """ Returns a nested dictionary of the given objects children, recursively.
@@ -347,28 +345,6 @@ class Supervision(AbstractObject):
         if orientation:
             blender_object.worldOrientation = orientation
 
-    @service
-    def get_b_boxes(self, path, filename):
-        blenderapi.make_screenshot(os.path.join(path, filename))
-        object_list = ['Ball1','Ball2','Ball3','Ball4','Ball5','Ball6','Ball7','Ball8','Screen1','Screen2','Screen3','Screen4']
-        # object_list = ['RedBull.001', 'RedBullZero']
-        # object_list = ['Bottle_Circle.000', 'Bottle_Circle.001', 'Can01', 'Can01.001', 'Can02', 'Can02.001', 'Can03', 'Can03.001']
-        # object_list = ['WaterBottle001', 'WaterBottle001.001', 'Can01', 'Can01.001', 'Can02', 'Can02.001', 'Can03', 'Can03.001', 'Coke001', 'Coke001.001', 'Coke002Cup']
-        while not os.path.exists(path):
-            continue
-        with open(os.path.join(path, filename + '.csv'), mode='w') as bBox_file:
-            bbox_writer = csv.writer(bBox_file)
-            bbox_writer.writerow(blenderapi.get_screensize())
-            bbox_writer.writerow(['object', 'x_min', 'x_max', 'y_min', 'y_max', 'z_val',
-                                  'cam_x', 'cam_y', 'cam_z', 'obj_x', 'obj_y', 'obj_z'])
-            for object_name in object_list:
-                bbox = blenderapi.get_bounding_box(object_name)
-                object_name = object_name.replace('.', 'q')
-                row = [object_name]
-                row.extend(bbox)
-                bbox_writer.writerow(row)
-        return
 
     def action(self):
         pass
-
